@@ -1,0 +1,9 @@
+name: deq2
+channels:
+  - defaults
+dependencies:
+  - numpy
+  - pip
+  - python=3.8
+  - scipy
+  - pillow
