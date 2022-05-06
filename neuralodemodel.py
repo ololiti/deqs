@@ -4,7 +4,7 @@ from torchdyn.core import NeuralODE
 from torchdyn.nn import Augmenter
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"Using {device} device")
+# print(f"Using {device} device")
 
 # Define model
 class NeuralNetwork(nn.Module):
@@ -29,7 +29,7 @@ class NeuralNetwork(nn.Module):
         neuralDE = NeuralODE(func, solver='rk4', sensitivity='autograd', return_t_eval=False)
 
         self.linearode = nn.Sequential(
-            nn.Linear(28 * 28, 512), neuralDE, nn.Linear(512, 10))
+            nn.Linear(465, 512), neuralDE, nn.Linear(512, 1), nn.Sigmoid())
 
     def forward(self, x):
         x = self.flatten(x)
@@ -41,7 +41,7 @@ def train(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     model.train()
     for batch, (X, y) in enumerate(dataloader):
-        X, y = X.to(device), y.to(device)
+        X, y = X.to(device), y.to(device).float()
 
         # Compute prediction error
         pred = model(X)[-1]
@@ -63,10 +63,10 @@ def test(dataloader, model, loss_fn):
     test_loss, correct = 0, 0
     with torch.no_grad():
         for X, y in dataloader:
-            X, y = X.to(device), y.to(device)
+            X, y = X.to(device), y.to(device).float()
             pred = model(X)[-1]
             test_loss += loss_fn(pred, y).item()
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+            correct += (abs(pred - y) < 0.5).type(torch.float).sum().item()
     test_loss /= num_batches
     correct /= size
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")

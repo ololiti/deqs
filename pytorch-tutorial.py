@@ -6,25 +6,26 @@ from torchvision.transforms import ToTensor
 import basemodel
 import neuralodemodel
 import matplotlib.pyplot as plt
+from generate_data import generate_test_data, generate_training_data
 
 num_epochs = 12
 
-def loadandtrain(modeltype, pathname):
+def loadandtrain(modeltype, pathname, training_data, test_data):
     # Download training data from open datasets.
-    training_data = datasets.FashionMNIST(
-        root="data",
-        train=True,
-        download=True,
-        transform=ToTensor(),
-    )
-
-    # Download test data from open datasets.
-    test_data = datasets.FashionMNIST(
-        root="data",
-        train=False,
-        download=True,
-        transform=ToTensor(),
-    )
+    # training_data = datasets.FashionMNIST(
+    #     root="data",
+    #     train=True,
+    #     download=True,
+    #     transform=ToTensor(),
+    # )
+    #
+    # # Download test data from open datasets.
+    # test_data = datasets.FashionMNIST(
+    #     root="data",
+    #     train=False,
+    #     download=True,
+    #     transform=ToTensor(),
+    # )
 
     batch_size = 64
 
@@ -42,7 +43,7 @@ def loadandtrain(modeltype, pathname):
     model = modeltype.NeuralNetwork().to(modeltype.device)
     print(model)
 
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.MSELoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
 
     accuracy = []
@@ -73,7 +74,13 @@ def plot(base_accuracy, ode_accuracy):
     plt.savefig("accuracy_plot.png")
 
 
-base_accuracy = loadandtrain(basemodel, "basemodel.pth")
-ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth")
+test_data = generate_test_data()
+print("Generated test data!")
+training_data = generate_training_data()
+print("Generated training data!")
+print("Training baseline model...")
+base_accuracy = loadandtrain(basemodel, "basemodel.pth", training_data, test_data)
+print("Training ODE model...")
+ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth", training_data, test_data)
 
 plot(base_accuracy, ode_accuracy)
