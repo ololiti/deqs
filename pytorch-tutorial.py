@@ -5,6 +5,9 @@ from torchvision import datasets
 from torchvision.transforms import ToTensor
 import basemodel
 import neuralodemodel
+import matplotlib.pyplot as plt
+
+num_epochs = 12
 
 def loadandtrain(modeltype, pathname):
     # Download training data from open datasets.
@@ -42,15 +45,35 @@ def loadandtrain(modeltype, pathname):
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
 
-    epochs = 5
-    for t in range(epochs):
+    accuracy = []
+    for t in range(num_epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         modeltype.train(train_dataloader, model, loss_fn, optimizer)
-        modeltype.test(test_dataloader, model, loss_fn)
+        curr_acc = modeltype.test(test_dataloader, model, loss_fn)
+        accuracy.append(curr_acc)
     print("Done!")
 
     torch.save(model.state_dict(), pathname)
     print(f"Saved PyTorch Model State to {pathname}")
 
-loadandtrain(basemodel, "basemodel.pth")
-loadandtrain(neuralodemodel, "odemodel.pth")
+    return accuracy
+
+
+def plot(base_accuracy, ode_accuracy):
+    plt.figure()
+    epochslist = [i+1 for i in range(num_epochs)]
+    plt.plot(epochslist, base_accuracy, 'xkcd:blurple', label='baseline')
+    plt.plot(epochslist, ode_accuracy, 'xkcd:lavender', label='ode')
+
+    plt.xlabel('epochs')
+    plt.ylabel('accuracy')
+    plt.ylim(0, 100)
+    plt.legend()
+
+    plt.savefig("accuracy_plot.png")
+
+
+base_accuracy = loadandtrain(basemodel, "basemodel.pth")
+ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth")
+
+plot(base_accuracy, ode_accuracy)
