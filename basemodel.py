@@ -14,8 +14,13 @@ class NeuralNetwork(nn.Module):
             nn.Tanh(),
             nn.Linear(512, 512),
             nn.Tanh(),
-            nn.Linear(512, 1),
-            nn.Sigmoid()
+            nn.Linear(512, 512),
+            nn.Tanh(),
+            nn.Linear(512, 512),
+            nn.Tanh(),
+            nn.Linear(512, 512),
+            nn.Tanh(),
+            nn.Linear(512, 1)
         )
 
     def forward(self, x):
@@ -52,8 +57,9 @@ def test(dataloader, model, loss_fn):
         for X, y in dataloader:
             X, y = X.to(device), y.to(device).float()
             pred = model(X)
+            #print(f"first prediction: {pred[0]}, y val: {y[0]}")
             test_loss += loss_fn(pred, y).item()
-            correct += (abs(pred - y) < 0.5).type(torch.float).sum().item()
+            correct += (abs(pred - y) < 1).type(torch.float).sum().item()
     test_loss /= num_batches
     correct /= size
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")

@@ -37,7 +37,7 @@ def embed(expression, embedding):
   val = numexpr.evaluate(expression)
   # label = torch.from_numpy(sign(val))
   feat = torch.cat([embedding[sym] for sym in expression])
-  return feat, np.array([1.0]) if val>0 else np.array([0.0])
+  return feat, np.array([1.0]) if val>0 else np.array([-1.0])
 
 # def data(sequence, embedding):
 #   features = []

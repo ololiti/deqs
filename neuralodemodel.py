@@ -24,12 +24,18 @@ class NeuralNetwork(nn.Module):
         func = nn.Sequential(
             nn.Tanh(),
             nn.Linear(512, 512),
-            nn.Tanh()
+            nn.Tanh(),
+            nn.Linear(512, 512),
+            nn.Tanh(),
+            nn.Linear(512, 512),
+            nn.Tanh(),
+            nn.Linear(512, 512),
+            nn.Tanh(),
         )
         neuralDE = NeuralODE(func, solver='rk4', sensitivity='autograd', return_t_eval=False)
 
         self.linearode = nn.Sequential(
-            nn.Linear(465, 512), neuralDE, nn.Linear(512, 1), nn.Sigmoid())
+            nn.Linear(465, 512), neuralDE, nn.Linear(512, 1))
 
     def forward(self, x):
         x = self.flatten(x)
@@ -66,7 +72,7 @@ def test(dataloader, model, loss_fn):
             X, y = X.to(device), y.to(device).float()
             pred = model(X)[-1]
             test_loss += loss_fn(pred, y).item()
-            correct += (abs(pred - y) < 0.5).type(torch.float).sum().item()
+            correct += (abs(pred - y) < 1).type(torch.float).sum().item()
     test_loss /= num_batches
     correct /= size
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")

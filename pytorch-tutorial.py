@@ -8,7 +8,7 @@ import neuralodemodel
 import matplotlib.pyplot as plt
 from generate_data import generate_test_data, generate_training_data
 
-num_epochs = 12
+num_epochs = 20
 
 def loadandtrain(modeltype, pathname, training_data, test_data):
     # Download training data from open datasets.
@@ -44,7 +44,7 @@ def loadandtrain(modeltype, pathname, training_data, test_data):
     print(model)
 
     loss_fn = nn.MSELoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
 
     accuracy = []
     for t in range(num_epochs):
@@ -74,6 +74,7 @@ def plot(base_accuracy, ode_accuracy):
     plt.savefig("accuracy_plot.png")
 
 
+#TODO: create a load-data-from-file option
 test_data = generate_test_data()
 print("Generated test data!")
 training_data = generate_training_data()
