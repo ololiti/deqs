@@ -4,7 +4,7 @@ from torchdyn.core import NeuralODE
 from torchdyn.nn import Augmenter
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"Using {device} device")
+# print(f"Using {device} device")
 
 # Define model
 class NeuralNetwork(nn.Module):

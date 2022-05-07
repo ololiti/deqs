@@ -5,9 +5,10 @@ from torchvision import datasets
 from torchvision.transforms import ToTensor
 import basemodel
 import neuralodemodel
+import deqmodel
 import matplotlib.pyplot as plt
 
-num_epochs = 12
+num_epochs = 6
 
 def loadandtrain(modeltype, pathname):
     # Download training data from open datasets.
@@ -59,11 +60,11 @@ def loadandtrain(modeltype, pathname):
     return accuracy
 
 
-def plot(base_accuracy, ode_accuracy):
+def plot(base_accuracy, deq_accuracy):
     plt.figure()
     epochslist = [i+1 for i in range(num_epochs)]
     plt.plot(epochslist, base_accuracy, 'xkcd:blurple', label='baseline')
-    plt.plot(epochslist, ode_accuracy, 'xkcd:lavender', label='ode')
+    plt.plot(epochslist, deq_accuracy, 'xkcd:lavender', label='deq')
 
     plt.xlabel('epochs')
     plt.ylabel('accuracy')
@@ -73,7 +74,8 @@ def plot(base_accuracy, ode_accuracy):
     plt.savefig("accuracy_plot.png")
 
 
+deq_accuracy = loadandtrain(deqmodel, "deqmodel.pth")
 base_accuracy = loadandtrain(basemodel, "basemodel.pth")
 ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth")
 
-plot(base_accuracy, ode_accuracy)
+plot(base_accuracy, deq_accuracy)
