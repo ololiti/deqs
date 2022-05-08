@@ -8,7 +8,7 @@ import neuralodemodel
 import deqmodel
 import matplotlib.pyplot as plt
 
-num_epochs = 6
+num_epochs = 12
 
 def loadandtrain(modeltype, pathname):
     # Download training data from open datasets.
@@ -46,7 +46,7 @@ def loadandtrain(modeltype, pathname):
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
 
-    accuracy = []
+    accuracy = [modeltype.test(test_dataloader, model, loss_fn)]
     for t in range(num_epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         modeltype.train(train_dataloader, model, loss_fn, optimizer)
@@ -62,12 +62,13 @@ def loadandtrain(modeltype, pathname):
 
 def plot(base_accuracy, deq_accuracy):
     plt.figure()
-    epochslist = [i+1 for i in range(num_epochs)]
+    epochslist = [i for i in range(num_epochs+1)]
     plt.plot(epochslist, base_accuracy, 'xkcd:blurple', label='baseline')
     plt.plot(epochslist, deq_accuracy, 'xkcd:lavender', label='deq')
 
     plt.xlabel('epochs')
     plt.ylabel('accuracy')
+    plt.xlim(0, num_epochs)
     plt.ylim(0, 100)
     plt.legend()
 
@@ -77,5 +78,6 @@ def plot(base_accuracy, deq_accuracy):
 deq_accuracy = loadandtrain(deqmodel, "deqmodel.pth")
 base_accuracy = loadandtrain(basemodel, "basemodel.pth")
 ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth")
+
 
 plot(base_accuracy, deq_accuracy)
