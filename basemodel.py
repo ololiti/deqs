@@ -6,41 +6,39 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Define model
 class NeuralNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self, data_size=14, seq_len=31, hidden_size=50, output_size=1, batch_size=64):
         super(NeuralNetwork, self).__init__()
-        self.flatten = nn.Flatten()
-        self.linear_relu_stack = nn.Sequential(
-            nn.Linear(465, 512),
-            nn.Tanh(),
-            nn.Linear(512, 512),
-            nn.Tanh(),
-            nn.Linear(512, 512),
-            nn.Tanh(),
-            nn.Linear(512, 512),
-            nn.Tanh(),
-            nn.Linear(512, 512),
-            nn.Tanh(),
-            nn.Linear(512, 1)
+        self.batch_size = batch_size
+        self.hidden_size = hidden_size
+        self.rnn = nn.RNN(data_size, hidden_size, batch_first=True)
+        self.fixoutput = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(hidden_size*seq_len, output_size),
+            nn.Sigmoid()
         )
 
     def forward(self, x):
-        x = self.flatten(x)
-        logits = self.linear_relu_stack(x)
-        return logits
+        # h0 = self.initHidden()
+        output, hidden = self.rnn(x)
+        output = self.fixoutput(output)
+        return output, hidden
+
+    def initHidden(self):
+        return torch.zeros(size=(1, self.batch_size, self.hidden_size)).float()
 
 
 def train(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     model.train()
     for batch, (X, y) in enumerate(dataloader):
-        X, y = X.to(device), y.to(device).float()
+        X, y = X.to(device).float(), y.to(device).float()
 
+        optimizer.zero_grad()
         # Compute prediction error
-        pred = model(X)
+        pred, hidden = model(X)
         loss = loss_fn(pred, y)
 
         # Backpropagation
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -55,11 +53,11 @@ def test(dataloader, model, loss_fn):
     test_loss, correct = 0, 0
     with torch.no_grad():
         for X, y in dataloader:
-            X, y = X.to(device), y.to(device).float()
-            pred = model(X)
+            X, y = X.to(device).float(), y.to(device).float()
+            pred, hidden = model(X)
             #print(f"first prediction: {pred[0]}, y val: {y[0]}")
             test_loss += loss_fn(pred, y).item()
-            correct += (abs(pred - y) < 1).type(torch.float).sum().item()
+            correct += (abs(pred - y) < 0.5).type(torch.float).sum().item()
     test_loss /= num_batches
     correct /= size
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")

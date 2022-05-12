@@ -36,8 +36,8 @@ def generate(length, operators, numbers):
 def embed(expression, embedding):
   val = numexpr.evaluate(expression)
   # label = torch.from_numpy(sign(val))
-  feat = torch.cat([embedding[sym] for sym in expression])
-  return feat, np.array([1.0]) if val>0 else np.array([-1.0])
+  feat = torch.from_numpy(np.array([[1 if embedding[i]==sym else 0 for i in range(len(embedding))] for sym in expression]))
+  return feat.long(), np.array([1.0]) if val>0 else np.array([0])
 
 # def data(sequence, embedding):
 #   features = []
@@ -63,21 +63,22 @@ def get_x_y_list(NUM_EXAMPLES):
   operators = np.array(['+', '-', '*', '/'])
   numbers = np.array(range(1,10)).astype('str_')
   id = torch.eye(15)
-  embedding = {'1': id[2],
-             '2': id[3],
-             '3': id[4],
-             '4': id[5],
-             '5': id[6],
-             '6': id[7],
-             '7': id[8],
-             '8': id[9],
-             '9': id[10],
-             '+': id[11],
-             '-': id[12],
-             '*': id[13],
-             '/': id[14],
-             '(': id[0],
-             ')': id[1], }
+  # embedding = {'1': id[2],
+  #            '2': id[3],
+  #            '3': id[4],
+  #            '4': id[5],
+  #            '5': id[6],
+  #            '6': id[7],
+  #            '7': id[8],
+  #            '8': id[9],
+  #            '9': id[10],
+  #            '+': id[11],
+  #            '-': id[12],
+  #            '*': id[13],
+  #            '/': id[14],
+  #            '(': id[0],
+  #            ')': id[1], }
+  embedding = [')', '(', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '/']
   sequence = []
   for _ in range(NUM_EXAMPLES):
     ex = generate(LENGTH_EXPRESSION, operators, numbers)
