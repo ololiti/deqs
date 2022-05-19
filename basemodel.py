@@ -13,8 +13,7 @@ class NeuralNetwork(nn.Module):
         self.rnn = nn.RNN(data_size, hidden_size, batch_first=True)
         self.fixoutput = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(hidden_size*seq_len, output_size),
-            nn.Sigmoid()
+            nn.Linear(hidden_size*seq_len, output_size)
         )
 
     def forward(self, x):
@@ -57,7 +56,7 @@ def test(dataloader, model, loss_fn):
             pred, hidden = model(X)
             #print(f"first prediction: {pred[0]}, y val: {y[0]}")
             test_loss += loss_fn(pred, y).item()
-            correct += (abs(pred - y) < 0.5).type(torch.float).sum().item()
+            correct += (abs(torch.sigmoid(pred) - y) < 0.5).type(torch.float).sum().item()
     test_loss /= num_batches
     correct /= size
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
