@@ -89,11 +89,14 @@ def get_x_y_list(NUM_EXAMPLES):
     sequence.append(ex)
   return list_of_tuples(sequence, embedding)
 
+
 def generate_training_data():
     return get_x_y_list(50000)
 
+
 def generate_test_data():
     return get_x_y_list(5000)
+
 
 if __name__ == "__main__":
     data = get_x_y_list(500)

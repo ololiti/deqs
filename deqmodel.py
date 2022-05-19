@@ -6,22 +6,24 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # DEQFixedPoint and anderson code taken from the DEQs repo
 class DEQFixedPoint(nn.Module):
-    def __init__(self, f, solver, **kwargs):
+    def __init__(self, f, solver, hidden_size, **kwargs):
         super().__init__()
         self.f = f
         self.solver = solver
+        self.hidden_size = hidden_size
         self.kwargs = kwargs
 
     def forward(self, x):
         # compute forward pass and re-engage autograd tape
         with torch.no_grad():
-            z = self.solver(lambda z: self.f(z, x), torch.zeros_like(x), **self.kwargs)['result']
-        z = self.f(z, x)
+            z_shape = (1, x.size(dim=0), self.hidden_size)
+            z = self.solver(lambda z: self.f(z, x)[1], torch.zeros(size=z_shape), **self.kwargs)['result']
+        [output, z] = self.f(z, x)
 
         if self.training:
             # set up Jacobian vector product (without additional forward calls)
             z0 = z.clone().detach().requires_grad_()
-            f0 = self.f(z0, x)
+            f0 = self.f(z0, x)[1]
 
             def backward_hook(grad):
                 g = self.solver(lambda y: autograd.grad(f0, z0, y, retain_graph=True)[0] + grad,
@@ -29,7 +31,7 @@ class DEQFixedPoint(nn.Module):
                 return g
 
             z.register_hook(backward_hook)
-        return z
+        return [output, z]
 
 
 def anderson(f, x0, m=6, lam=1e-4, threshold=50, eps=1e-3, stop_mode='rel', beta=1.0, **kwargs):
@@ -98,15 +100,11 @@ def anderson(f, x0, m=6, lam=1e-4, threshold=50, eps=1e-3, stop_mode='rel', beta
 class Func(nn.Module):
     def __init__(self, data_size, hidden_size):
         super(Func, self).__init__()
-        self.h_layer = nn.Linear(data_size, hidden_size)
-        self.x_layer = nn.Linear(data_size, hidden_size)
-        self.tanh = nn.Tanh()
-        self.output = nn.Sequential(nn.Linear(hidden_size, data_size), nn.Tanh())
+        self.rnn = nn.RNN(data_size, hidden_size, batch_first=True)
 
-    def forward(self, x, z):
-        hidden = self.tanh(self.h_layer(z) + self.x_layer(x))
-        output = self.output(hidden)
-        return output
+    def forward(self, z, x):
+        output, hidden = self.rnn(x, z)
+        return [output, hidden]
 
 
 class NeuralNetwork(nn.Module):
@@ -115,15 +113,15 @@ class NeuralNetwork(nn.Module):
 
         func = Func(data_size, hidden_size)
 
-        self.mydeq = DEQFixedPoint(func, solver=anderson)
+        self.mydeq = DEQFixedPoint(func, solver=anderson, hidden_size=hidden_size)
 
         self.fixoutput = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(data_size*seq_len, output_size))
+            nn.Linear(hidden_size*seq_len, output_size))
 
     def forward(self, x):
-        x = self.mydeq(x)
-        return self.fixoutput(x)
+        [x, hidden] = self.mydeq(x)
+        return self.fixoutput(x), hidden
 
 
 def train(dataloader, model, loss_fn, optimizer):
@@ -134,7 +132,7 @@ def train(dataloader, model, loss_fn, optimizer):
 
         optimizer.zero_grad()
         # Compute prediction error
-        pred = model(X)
+        pred, hidden = model(X)
         loss = loss_fn(pred, y)
 
         # Backpropagation
@@ -154,7 +152,7 @@ def test(dataloader, model, loss_fn):
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.to(device).float(), y.to(device).float()
-            pred = model(X)
+            pred, hidden = model(X)
             #print(f"first prediction: {pred[0]}, y val: {y[0]}")
             test_loss += loss_fn(pred, y).item()
             correct += (abs(torch.sigmoid(pred) - y) < 0.5).type(torch.float).sum().item()
