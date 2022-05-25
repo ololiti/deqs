@@ -3,14 +3,12 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor
-import basemodel
-import neuralodemodel
+import basemodel_r as basemodel
 import matplotlib.pyplot as plt
 import numpy as np
-from generate_data import generate_test_data, generate_training_data
-import deqmodel
+from generate_data_r import generate_test_data, generate_training_data
 
-num_epochs = 60
+num_epochs = 30
 
 def loadandtrain(modeltype, pathname, training_data, test_data):
     # Download training data from open datasets.
@@ -45,9 +43,8 @@ def loadandtrain(modeltype, pathname, training_data, test_data):
     model = modeltype.NeuralNetwork().to(modeltype.device)
     print(model)
 
-    pos_weight = torch.from_numpy(np.array([0.66]))
-    loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+    loss_fn = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
 
     accuracy = []
     for t in range(num_epochs):
@@ -63,11 +60,12 @@ def loadandtrain(modeltype, pathname, training_data, test_data):
     return accuracy
 
 
-def plot(base_accuracy, deq_accuracy):
+def plot(base_accuracy, deq_accuracy=None):
     plt.figure()
     epochslist = [i+1 for i in range(num_epochs)]
     plt.plot(epochslist, base_accuracy, 'xkcd:blurple', label='baseline')
-    plt.plot(epochslist, deq_accuracy, 'xkcd:lavender', label='deq')
+    if deq_accuracy is not None:
+        plt.plot(epochslist, deq_accuracy, 'xkcd:lavender', label='deq')
 
     plt.xlabel('epochs')
     plt.ylabel('accuracy')
@@ -88,4 +86,4 @@ base_accuracy = loadandtrain(basemodel, "basemodel.pth", training_data, test_dat
 # ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth", training_data, test_data)
 # deq_accuracy = loadandtrain(deqmodel, "deqmodel.pth", training_data, test_data)
 
-plot(base_accuracy, deq_accuracy)
+plot(base_accuracy)
