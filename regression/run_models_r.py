@@ -44,7 +44,7 @@ def loadandtrain(modeltype, pathname, training_data, test_data):
     print(model)
 
     loss_fn = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1)
 
     accuracy = []
     for t in range(num_epochs):
