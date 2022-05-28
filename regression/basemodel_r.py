@@ -10,19 +10,21 @@ class NeuralNetwork(nn.Module):
         super(NeuralNetwork, self).__init__()
         self.batch_size = batch_size
         self.hidden_size = hidden_size
-        self.rnn = nn.RNN(data_size, hidden_size, batch_first=True)
+        self.rnn = nn.RNN(data_size, hidden_size, batch_first=True, num_layers=3)
         self.fixoutput = nn.Sequential(
             nn.Flatten(),
             nn.Linear(hidden_size*seq_len, hidden_size),
             nn.Tanh(),
-            nn.Linear(hidden_size, output_size),
-            nn.Tanh()
+            nn.Linear(hidden_size, output_size)
         )
+        # self.final = nn.Linear(hidden_size, output_size)
+        # nn.init.xavier_uniform_(self.final.weight)
 
     def forward(self, x):
         # h0 = self.initHidden()
         output, hidden = self.rnn(x)
         output = self.fixoutput(output)
+        # output = self.final(output)
         return output, hidden
 
     def initHidden(self):
@@ -64,7 +66,7 @@ def test(dataloader, model, loss_fn):
                 print(f"first prediction: {pred[0:5]}, y val: {y[0:5]}")
                 first = False
             test_loss += loss_fn(pred, y).item()
-            correct += (abs(pred - y) < 0.5).type(torch.float).sum().item()
+            correct += (abs(pred - y) < 0.2).type(torch.float).sum().item()
     test_loss /= num_batches
     correct /= size
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")

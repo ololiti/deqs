@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from generate_data_r import generate_test_data, generate_training_data
 
-num_epochs = 30
+num_epochs = 90
 
 def loadandtrain(modeltype, pathname, training_data, test_data):
     # Download training data from open datasets.
@@ -44,7 +44,7 @@ def loadandtrain(modeltype, pathname, training_data, test_data):
     print(model)
 
     loss_fn = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
 
     accuracy = []
     for t in range(num_epochs):

@@ -86,7 +86,9 @@ def get_x_y_list(NUM_EXAMPLES):
     for _ in range(NUM_EXAMPLES):
         ex = generate(LENGTH_EXPRESSION, operators, numbers)
         try:
-            numexpr.evaluate(ex)
+            val = numexpr.evaluate(ex)
+            if np.abs(val) > 100:
+                continue
         except:
             continue
         sequence.append(ex)
@@ -94,7 +96,7 @@ def get_x_y_list(NUM_EXAMPLES):
 
 
 def generate_training_data():
-    return get_x_y_list(50000)
+    return get_x_y_list(500000)
 
 
 def generate_test_data():

@@ -117,9 +117,7 @@ class NeuralNetwork(nn.Module):
 
         self.fixoutput = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(hidden_size * seq_len, hidden_size),
-            nn.Tanh(),
-            nn.Linear(hidden_size, output_size)
+            nn.Linear(hidden_size * seq_len, output_size)
         )
 
     def forward(self, x):
