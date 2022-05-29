@@ -101,7 +101,7 @@ class Func(nn.Module):
         self.flatten = nn.Flatten()
         self.z_layers = nn.Sequential(
             nn.Tanh(),
-            nn.Linear(512, 512),
+            nn.Linear(200, 200),
             nn.Tanh()
         )
         self.x_layers = nn.Tanh()
@@ -121,7 +121,7 @@ class NeuralNetwork(nn.Module):
         mydeq = DEQFixedPoint(func, solver=anderson)
 
         self.deqlayer = nn.Sequential(
-            nn.Linear(28 * 28, 512), mydeq, nn.Linear(512, 10))
+            nn.Linear(28 * 28, 200), mydeq, nn.Linear(200, 10))
 
     def forward(self, x):
         x = self.flatten(x)

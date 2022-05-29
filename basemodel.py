@@ -10,11 +10,11 @@ class NeuralNetwork(nn.Module):
         super(NeuralNetwork, self).__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(28*28, 512),
+            nn.Linear(28*28, 200),
             nn.Tanh(),
-            nn.Linear(512, 512),
+            nn.Linear(200, 200),
             nn.Tanh(),
-            nn.Linear(512, 10)
+            nn.Linear(200, 10)
         )
 
     def forward(self, x):

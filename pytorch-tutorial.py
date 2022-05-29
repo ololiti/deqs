@@ -7,8 +7,9 @@ import basemodel
 import neuralodemodel
 import deqmodel
 import matplotlib.pyplot as plt
+import time
 
-num_epochs = 12
+num_epochs = 100
 
 def loadandtrain(modeltype, pathname):
     # Download training data from open datasets.
@@ -46,38 +47,46 @@ def loadandtrain(modeltype, pathname):
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
 
+    times = [0]
     accuracy = [modeltype.test(test_dataloader, model, loss_fn)]
+    start_time = time.time()
     for t in range(num_epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         modeltype.train(train_dataloader, model, loss_fn, optimizer)
         curr_acc = modeltype.test(test_dataloader, model, loss_fn)
+        end_time = time.time()
+        times.append(end_time - start_time)
         accuracy.append(curr_acc)
+        if times[len(times)-1] >= 600:
+            break
     print("Done!")
 
     torch.save(model.state_dict(), pathname)
     print(f"Saved PyTorch Model State to {pathname}")
 
-    return accuracy
+    return times, accuracy
 
 
 def plot(base_accuracy, deq_accuracy):
     plt.figure()
     epochslist = [i for i in range(num_epochs+1)]
-    plt.plot(epochslist, base_accuracy, 'xkcd:blurple', label='baseline')
-    plt.plot(epochslist, deq_accuracy, 'xkcd:lavender', label='deq')
+    times, accuracy = base_accuracy
+    plt.plot(times, accuracy, 'xkcd:blurple', label='baseline')
+    times, accuracy = deq_accuracy
+    plt.plot(times, accuracy, 'xkcd:lavender', label='deq')
 
-    plt.xlabel('epochs')
+    plt.xlabel('time (s)')
     plt.ylabel('accuracy')
-    plt.xlim(0, num_epochs)
+    plt.xlim(0, 650)
     plt.ylim(0, 100)
     plt.legend()
 
     plt.savefig("accuracy_plot.png")
 
 
-deq_accuracy = loadandtrain(deqmodel, "deqmodel.pth")
 base_accuracy = loadandtrain(basemodel, "basemodel.pth")
-ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth")
+deq_accuracy = loadandtrain(deqmodel, "deqmodel.pth")
+# ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth")
 
 
 plot(base_accuracy, deq_accuracy)
