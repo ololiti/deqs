@@ -10,7 +10,7 @@ import numpy as np
 from generate_data import generate_test_data, generate_training_data
 import deqmodel
 
-num_epochs = 20
+num_epochs = 40
 
 def loadandtrain(modeltype, pathname, training_data, test_data):
     # Download training data from open datasets.

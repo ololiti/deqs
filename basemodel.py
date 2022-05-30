@@ -39,6 +39,7 @@ def train(dataloader, model, loss_fn, optimizer):
 
         # Backpropagation
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
         optimizer.step()
 
         if batch % 100 == 0:

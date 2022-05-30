@@ -16,14 +16,14 @@ class DEQFixedPoint(nn.Module):
     def forward(self, x):
         # compute forward pass and re-engage autograd tape
         with torch.no_grad():
-            z_shape = (1, x.size(dim=0), self.hidden_size)
-            z = self.solver(lambda z: self.f(z, x)[1], torch.zeros(size=z_shape), **self.kwargs)['result']
-        [output, z] = self.f(z, x)
+            z_shape = (x.size(dim=0), x.size(dim=1), self.hidden_size)
+            z = self.solver(lambda z: self.f(z, x), torch.zeros(size=z_shape), **self.kwargs)['result']
+        z = self.f(z, x)
 
         if self.training:
             # set up Jacobian vector product (without additional forward calls)
             z0 = z.clone().detach().requires_grad_()
-            f0 = self.f(z0, x)[1]
+            f0 = self.f(z0, x)
 
             def backward_hook(grad):
                 g = self.solver(lambda y: autograd.grad(f0, z0, y, retain_graph=True)[0] + grad,
@@ -31,7 +31,7 @@ class DEQFixedPoint(nn.Module):
                 return g
 
             z.register_hook(backward_hook)
-        return [output, z]
+        return z
 
 
 def anderson(f, x0, m=6, lam=1e-4, threshold=50, eps=1e-3, stop_mode='rel', beta=1.0, **kwargs):
@@ -101,10 +101,12 @@ class Func(nn.Module):
     def __init__(self, data_size, hidden_size):
         super(Func, self).__init__()
         self.rnn = nn.RNN(data_size, hidden_size, batch_first=True)
+        self.tanh = nn.Tanh()
 
     def forward(self, z, x):
-        output, hidden = self.rnn(x, z)
-        return [output, hidden]
+        output, hidden = self.rnn(x)
+        final = self.tanh(output + z)
+        return final
 
 
 class NeuralNetwork(nn.Module):
@@ -121,8 +123,8 @@ class NeuralNetwork(nn.Module):
         )
 
     def forward(self, x):
-        [x, hidden] = self.mydeq(x)
-        return self.fixoutput(x), hidden
+        output = self.mydeq(x)
+        return self.fixoutput(output)
 
 
 def train(dataloader, model, loss_fn, optimizer):
@@ -133,11 +135,12 @@ def train(dataloader, model, loss_fn, optimizer):
 
         optimizer.zero_grad()
         # Compute prediction error
-        pred, hidden = model(X)
+        pred = model(X)
         loss = loss_fn(pred, y)
 
         # Backpropagation
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
         optimizer.step()
 
         if batch % 100 == 0:
@@ -153,7 +156,7 @@ def test(dataloader, model, loss_fn):
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.to(device).float(), y.to(device).float()
-            pred, hidden = model(X)
+            pred = model(X)
             #print(f"first prediction: {pred[0]}, y val: {y[0]}")
             test_loss += loss_fn(pred, y).item()
             correct += (abs(torch.sigmoid(pred) - y) < 0.5).type(torch.float).sum().item()
