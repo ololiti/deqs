@@ -45,8 +45,8 @@ def loadandtrain(modeltype, pathname, training_data, test_data):
     model = modeltype.NeuralNetwork().to(modeltype.device)
     print(model)
 
-    pos_weight = torch.from_numpy(np.array([0.66]))
-    loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    pos_weight = torch.from_numpy(np.array([0.66])).to(modeltype.device)
+    loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight).to(modeltype.device)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
 
     accuracy = []
@@ -83,7 +83,8 @@ print("Generated test data!")
 training_data = generate_training_data()
 print("Generated training data!")
 print("Training baseline model...")
-base_accuracy = loadandtrain(basemodel, "basemodel.pth", training_data, test_data)
+
+#base_accuracy = loadandtrain(basemodel, "basemodel.pth", training_data, test_data)
 # print("Training ODE model...")
 # ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth", training_data, test_data)
 deq_accuracy = loadandtrain(deqmodel, "deqmodel.pth", training_data, test_data)
