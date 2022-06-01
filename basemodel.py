@@ -10,7 +10,7 @@ class NeuralNetwork(nn.Module):
         super(NeuralNetwork, self).__init__()
         self.batch_size = batch_size
         self.hidden_size = hidden_size
-        self.rnn = nn.RNN(data_size, hidden_size, batch_first=True)
+        self.rnn = nn.GRU(data_size, hidden_size, batch_first=True)
         self.fixoutput = nn.Sequential(
             nn.Flatten(),
             nn.Linear(hidden_size*seq_len, output_size)
@@ -39,7 +39,7 @@ def train(dataloader, model, loss_fn, optimizer):
 
         # Backpropagation
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
         optimizer.step()
 
         if batch % 100 == 0:
@@ -62,3 +62,7 @@ def test(dataloader, model, loss_fn):
     correct /= size
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
     return 100*correct
+
+
+
+
