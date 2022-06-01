@@ -17,7 +17,7 @@ class DEQFixedPoint(nn.Module):
         # compute forward pass and re-engage autograd tape
         with torch.no_grad():
             z_shape = (x.size(dim=0), x.size(dim=1), self.hidden_size)
-            z = self.solver(lambda z: self.f(z, x), torch.zeros(size=z_shape), **self.kwargs)['result']
+            z = self.solver(lambda z: self.f(z, x), x0=x, **self.kwargs)['result']
         z = self.f(z, x)
 
         if self.training:
