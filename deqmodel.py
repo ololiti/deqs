@@ -103,13 +103,13 @@ def anderson(f, x0, m=6, lam=1e-4, threshold=50, eps=1e-3, stop_mode='rel', beta
 class Func(nn.Module):
     def __init__(self, data_size, hidden_size):
         super(Func, self).__init__()
-        self.rnn = nn.RNN(data_size, hidden_size, batch_first=True)
+        self.rnnz = nn.GRU(hidden_size, hidden_size, batch_first=True)
         self.tanh = nn.Tanh()
 
     def forward(self, z, x):
         z, x = z.to(device), x.to(device)
-        output, hidden = self.rnn(x)
-        final = self.tanh(output + z)
+        outputz, hiddenz = self.rnnz(z)
+        final = self.tanh(outputz + x)
         return final
 
 
@@ -118,6 +118,9 @@ class NeuralNetwork(nn.Module):
         super(NeuralNetwork, self).__init__()
 
         func = Func(data_size, hidden_size)
+        
+        self.rnnx = nn.GRU(data_size, hidden_size, batch_first=True)
+
 
         self.mydeq = DEQFixedPoint(func, solver=anderson, hidden_size=hidden_size)
 
@@ -128,7 +131,8 @@ class NeuralNetwork(nn.Module):
 
     def forward(self, x):
         x = x.to(device)
-        output = self.mydeq(x)
+        z0, hidden = self.rnnx(x)
+        output = self.mydeq(z0)
         return self.fixoutput(output)
 
 
@@ -145,7 +149,7 @@ def train(dataloader, model, loss_fn, optimizer):
 
         # Backpropagation
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
         optimizer.step()
 
         if batch % 100 == 0:
