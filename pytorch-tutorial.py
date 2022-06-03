@@ -75,15 +75,15 @@ def loadandtrain(modeltype, pathname, training_data, validation_data, test_data)
 def plot_epochs(base_accuracy, deq_accuracy):
     plt.figure()
     epochslist = [i+1 for i in range(num_epochs)]
-    plt.plot(epochslist, base_accuracy, 'xkcd:blurple', label='baseline')
-    plt.plot(epochslist, deq_accuracy, 'xkcd:lavender', label='deq')
+    plt.plot(epochslist, base_accuracy[0], 'xkcd:blurple', label='baseline')
+    plt.plot(epochslist, deq_accuracy[0], 'xkcd:lavender', label='deq')
 
     plt.xlabel('epochs')
     plt.ylabel('accuracy')
     plt.ylim(0, 100)
     plt.legend()
 
-    plt.savefig("accuracy_plot.png")
+    plt.savefig("accuracy_epoch_plot.png")
 
 def plot_time(base_accuracy, deq_accuracy):
     plt.figure()
@@ -98,7 +98,7 @@ def plot_time(base_accuracy, deq_accuracy):
     plt.ylim(0, 100)
     plt.legend()
 
-    plt.savefig("accuracy_plot.png")
+    plt.savefig("accuracy_time_plot.png")
 
 
 #TODO: create a load-data-from-file option
@@ -110,11 +110,16 @@ training_data = generate_training_data()
 print("Generated training data!")
 print("Training baseline model...")
 
-base_accuracy = loadandtrain(basemodel, "basemodel.pth", training_data, validation_data, test_data)
+base_accuracy = loadandtrain(basemodel, "basemodel_exp.pth", training_data, validation_data, test_data)
 # print("Training ODE model...")
 # ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth", training_data, test_data)
-deq_accuracy = loadandtrain(deqmodel, "deqmodel.pth", training_data, validation_data, test_data)
+deq_accuracy = loadandtrain(deqmodel, "deqmodel_exp.pth", training_data, validation_data, test_data)
 
+
+
+plot_epochs(base_accuracy, deq_accuracy)
 plot_time(base_accuracy, deq_accuracy)
+
+
 
 

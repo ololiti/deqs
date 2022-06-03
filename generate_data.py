@@ -98,6 +98,19 @@ def generate_test_data():
     return get_x_y_list(5000)
 
 
+def decoder(seq):
+    exp = ''
+    embedding = [')', '(', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '/']
+    for sym in seq:
+        if torch.sum(sym) == 0:
+            exp += '*'
+        else:
+            index = sym.nonzero(as_tuple=True)[0]
+            exp += embedding[index]
+    return exp
+        
+
+
 if __name__ == "__main__":
     data = get_x_y_list(500)
     mydataloader = DataLoader(data, batch_size=20)
@@ -105,3 +118,7 @@ if __name__ == "__main__":
         print(X[0])
         print(y[0])
         break
+
+
+
+
