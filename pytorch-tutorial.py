@@ -13,6 +13,7 @@ import time
 import csv
 
 num_epochs = 40
+np.random.seed(0)
 
 def loadandtrain(modeltype, pathname, training_data, validation_data, test_data, multilayer=False):
     # Download training data from open datasets.

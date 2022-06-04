@@ -111,14 +111,10 @@ def decoder(seq):
 
 
 if __name__ == "__main__":
-    np.seed(0)
     data = get_x_y_list(500)
     mydataloader = DataLoader(data, batch_size=20)
     for X, y in mydataloader:
         print(X[0])
         print(y[0])
         break
-
-
-
 
