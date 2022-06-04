@@ -6,11 +6,11 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Define model
 class NeuralNetwork(nn.Module):
-    def __init__(self, data_size=14, seq_len=31, hidden_size=50, output_size=1, batch_size=64):
+    def __init__(self, data_size=14, seq_len=31, hidden_size=50, output_size=1, batch_size=64, num_layers=1):
         super(NeuralNetwork, self).__init__()
         self.batch_size = batch_size
         self.hidden_size = hidden_size
-        self.rnn = nn.GRU(data_size, hidden_size, batch_first=True)
+        self.rnn = nn.GRU(data_size, hidden_size, num_layers=num_layers, batch_first=True)
         self.fixoutput = nn.Sequential(
             nn.Flatten(),
             nn.Linear(hidden_size*seq_len, output_size)

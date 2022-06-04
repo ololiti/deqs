@@ -63,6 +63,7 @@ def anderson(f, x0, m=6, lam=1e-4, threshold=50, eps=1e-3, stop_mode='rel', beta
         G = F[:, :n] - X[:, :n]
         H[:, 1:n + 1, 1:n + 1] = torch.bmm(G, G.transpose(1, 2)) + lam * torch.eye(n, dtype=x0.dtype, device=x0.device)[
             None]
+        # alpha = torch.linalg.solve(H[:, :n + 1, :n + 1], y[:, :n + 1])[:, 1:n + 1, 0]
         alpha = torch.solve(y[:, :n + 1], H[:, :n + 1, :n + 1])[0][:, 1:n + 1, 0]  # (bsz x n)
 
         X[:, k % m] = beta * (alpha[:, None] @ F[:, :n])[:, 0] + (1 - beta) * (alpha[:, None] @ X[:, :n])[:, 0]
@@ -99,84 +100,6 @@ def anderson(f, x0, m=6, lam=1e-4, threshold=50, eps=1e-3, stop_mode='rel', beta
     X = F = None
     return out
 
-def broyden(f, x0, threshold, eps=1e-3, stop_mode="rel", ls=False, name="unknown"):
-    bsz, total_hsize, seq_len = x0.size()
-    g = lambda y: f(y) - y
-    dev = x0.device
-    alternative_mode = 'rel' if stop_mode == 'abs' else 'abs'
-    
-    x_est = x0           # (bsz, 2d, L')
-    gx = g(x_est)        # (bsz, 2d, L')
-    nstep = 0
-    tnstep = 0
-    
-    # For fast calculation of inv_jacobian (approximately)
-    Us = torch.zeros(bsz, total_hsize, seq_len, threshold).to(dev)     # One can also use an L-BFGS scheme to further reduce memory
-    VTs = torch.zeros(bsz, threshold, total_hsize, seq_len).to(dev)
-    update = -matvec(Us[:,:,:,:nstep], VTs[:,:nstep], gx)      # Formally should be -torch.matmul(inv_jacobian (-I), gx)
-    prot_break = False
-    
-    # To be used in protective breaks
-    protect_thres = (1e6 if stop_mode == "abs" else 1e3) * seq_len
-    new_objective = 1e8
-
-    trace_dict = {'abs': [],
-                  'rel': []}
-    lowest_dict = {'abs': 1e8,
-                   'rel': 1e8}
-    lowest_step_dict = {'abs': 0,
-                        'rel': 0}
-    nstep, lowest_xest, lowest_gx = 0, x_est, gx
-
-    while nstep < threshold:
-        x_est, gx, delta_x, delta_gx, ite = line_search(update, x_est, gx, g, nstep=nstep, on=ls)
-        nstep += 1
-        tnstep += (ite+1)
-        abs_diff = torch.norm(gx).item()
-        rel_diff = abs_diff / (torch.norm(gx + x_est).item() + 1e-9)
-        diff_dict = {'abs': abs_diff,
-                     'rel': rel_diff}
-        trace_dict['abs'].append(abs_diff)
-        trace_dict['rel'].append(rel_diff)
-        for mode in ['rel', 'abs']:
-            if diff_dict[mode] < lowest_dict[mode]:
-                if mode == stop_mode: 
-                    lowest_xest, lowest_gx = x_est.clone().detach(), gx.clone().detach()
-                lowest_dict[mode] = diff_dict[mode]
-                lowest_step_dict[mode] = nstep
-
-        new_objective = diff_dict[stop_mode]
-        if new_objective < eps: break
-        if new_objective < 3*eps and nstep > 30 and np.max(trace_dict[stop_mode][-30:]) / np.min(trace_dict[stop_mode][-30:]) < 1.3:
-            # if there's hardly been any progress in the last 30 steps
-            break
-        if new_objective > trace_dict[stop_mode][0] * protect_thres:
-            prot_break = True
-            break
-
-        part_Us, part_VTs = Us[:,:,:,:nstep-1], VTs[:,:nstep-1]
-        vT = rmatvec(part_Us, part_VTs, delta_x)
-        u = (delta_x - matvec(part_Us, part_VTs, delta_gx)) / torch.einsum('bij, bij -> b', vT, delta_gx)[:,None,None]
-        vT[vT != vT] = 0
-        u[u != u] = 0
-        VTs[:,nstep-1] = vT
-        Us[:,:,:,nstep-1] = u
-        update = -matvec(Us[:,:,:,:nstep], VTs[:,:nstep], gx)
-
-    # Fill everything up to the threshold length
-    for _ in range(threshold+1-len(trace_dict[stop_mode])):
-        trace_dict[stop_mode].append(lowest_dict[stop_mode])
-        trace_dict[alternative_mode].append(lowest_dict[alternative_mode])
-
-    return {"result": lowest_xest,
-            "lowest": lowest_dict[stop_mode],
-            "nstep": lowest_step_dict[stop_mode],
-            "prot_break": prot_break,
-            "abs_trace": trace_dict['abs'],
-            "rel_trace": trace_dict['rel'],
-            "eps": eps,
-            "threshold": threshold}
-
 
 class Func(nn.Module):
     def __init__(self, data_size, hidden_size):
@@ -195,22 +118,24 @@ class NeuralNetwork(nn.Module):
     def __init__(self, data_size=14, seq_len=31, hidden_size=50, output_size=1, batch_size=64):
         super(NeuralNetwork, self).__init__()
 
-        func = Func(data_size, hidden_size)
+        self.func = Func(data_size, hidden_size)
         
         self.rnnx = nn.GRU(data_size, hidden_size, batch_first=True)
 
 
-        self.mydeq = DEQFixedPoint(func, solver=broyden, hidden_size=hidden_size)
+        self.mydeq = DEQFixedPoint(self.func, solver=anderson, hidden_size=hidden_size)
 
         self.fixoutput = nn.Sequential(
             nn.Flatten(),
             nn.Linear(hidden_size * seq_len, output_size)
         )
 
-    def forward(self, x):
+    def forward(self, x, checkfixed=False):
         x = x.to(device)
         z0, hidden = self.rnnx(x)
         output = self.mydeq(z0)
+        if checkfixed:
+            print(f"z - f(z) = {output - self.func(output, z0)}")
         return self.fixoutput(output)
 
 
@@ -222,7 +147,10 @@ def train(dataloader, model, loss_fn, optimizer):
 
         optimizer.zero_grad()
         # Compute prediction error
-        pred = model(X)
+        if batch % 100 == 0:
+            pred = model(X, checkfixed=True)
+        else:
+            pred = model(X)
         loss = loss_fn(pred, y)
 
         # Backpropagation

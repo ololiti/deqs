@@ -13,7 +13,7 @@ import time
 
 num_epochs = 40
 
-def loadandtrain(modeltype, pathname, training_data, validation_data, test_data):
+def loadandtrain(modeltype, pathname, training_data, validation_data, test_data, multilayer=False):
     # Download training data from open datasets.
     # training_data = datasets.FashionMNIST(
     #     root="data",
@@ -44,7 +44,10 @@ def loadandtrain(modeltype, pathname, training_data, validation_data, test_data)
 
     print(f"Using {modeltype.device} device")
 
-    model = modeltype.NeuralNetwork().to(modeltype.device)
+    if multilayer:
+        model = modeltype.NeuralNetwork(num_layers=3).to(modeltype.device)
+    else:
+        model = modeltype.NeuralNetwork().to(modeltype.device)
     print(model)
 
     pos_weight = torch.from_numpy(np.array([0.66])).to(modeltype.device)
@@ -60,7 +63,7 @@ def loadandtrain(modeltype, pathname, training_data, validation_data, test_data)
         curr_acc = modeltype.test(validation_dataloader, model, loss_fn)
         curr_time = time.time()
         accuracy.append(curr_acc)
-        times.append(curr_time)
+        times.append(curr_time - start_time)
     print("Done!")
 
     torch.save(model.state_dict(), pathname)
@@ -72,11 +75,12 @@ def loadandtrain(modeltype, pathname, training_data, validation_data, test_data)
     return accuracy, times
 
 
-def plot_epochs(base_accuracy, deq_accuracy):
+def plot_epochs(accuracies, names):
+    COLORS = ['xkcd:blurple', 'xkcd:lavender', 'xkcd:lightblue', 'xkcd:indigo', 'xkcd:babypink']
     plt.figure()
     epochslist = [i+1 for i in range(num_epochs)]
-    plt.plot(epochslist, base_accuracy[0], 'xkcd:blurple', label='baseline')
-    plt.plot(epochslist, deq_accuracy[0], 'xkcd:lavender', label='deq')
+    for i in range(len(accuracies)):
+        plt.plot(epochslist, accuracies[i][0], COLORS[i], label=names[i])
 
     plt.xlabel('epochs')
     plt.ylabel('accuracy')
@@ -85,15 +89,15 @@ def plot_epochs(base_accuracy, deq_accuracy):
 
     plt.savefig("accuracy_epoch_plot.png")
 
-def plot_time(base_accuracy, deq_accuracy):
+def plot_time(accuracies, names):
+    COLORS = ['xkcd:blurple', 'xkcd:lavender', 'xkcd:lightblue', 'xkcd:indigo', 'xkcd:babypink']
     plt.figure()
-    accuracy, times = base_accuracy
-    plt.plot(times, accuracy, 'xkcd:blurple', label='baseline')
-    accuracy, times = deq_accuracy
-    plt.plot(times, accuracy, 'xkcd:lavender', label='deq')
+    for i in range(len(accuracies)):
+        plt.plot(accuracies[i][0], accuracies[i][1], COLORS[i], label=names[i])
 
     plt.xlabel('time (s)')
     plt.ylabel('accuracy')
+    times = accuracies[len(accuracies)-1][1]
     plt.xlim(0, times[len(times)-1])
     plt.ylim(0, 100)
     plt.legend()
@@ -111,14 +115,17 @@ print("Generated training data!")
 print("Training baseline model...")
 
 base_accuracy = loadandtrain(basemodel, "basemodel_exp.pth", training_data, validation_data, test_data)
+multilayer_accuracy = loadandtrain(basemodel, "mlmodel_exp.pth", training_data, validation_data, test_data, multilayer=True)
+
 # print("Training ODE model...")
 # ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth", training_data, test_data)
 deq_accuracy = loadandtrain(deqmodel, "deqmodel_exp.pth", training_data, validation_data, test_data)
 
 
-
-plot_epochs(base_accuracy, deq_accuracy)
-plot_time(base_accuracy, deq_accuracy)
+accuracies = [base_accuracy, multilayer_accuracy, deq_accuracy]
+names = ["GRU (1 layer)", "GRU (3 layer)", "DEQ"]
+plot_epochs(accuracies, names)
+plot_time(accuracies, names)
 
 
 
