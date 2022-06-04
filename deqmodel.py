@@ -122,7 +122,6 @@ class NeuralNetwork(nn.Module):
         
         self.rnnx = nn.GRU(data_size, hidden_size, batch_first=True)
 
-
         self.mydeq = DEQFixedPoint(self.func, solver=anderson, hidden_size=hidden_size)
 
         self.fixoutput = nn.Sequential(
@@ -135,7 +134,7 @@ class NeuralNetwork(nn.Module):
         z0, hidden = self.rnnx(x)
         output = self.mydeq(z0)
         if checkfixed:
-            print(f"z - f(z) = {output - self.func(output, z0)}")
+            print(f"z - f(z) = {torch.linalg.norm(output - self.func(output, z0))}")
         return self.fixoutput(output)
 
 

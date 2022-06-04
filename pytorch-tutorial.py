@@ -10,6 +10,7 @@ import numpy as np
 from generate_data import generate_test_data, generate_training_data
 import deqmodel
 import time
+import csv
 
 num_epochs = 40
 
@@ -85,6 +86,7 @@ def plot_epochs(accuracies, names):
     plt.xlabel('epochs')
     plt.ylabel('accuracy')
     plt.ylim(0, 100)
+    plt.grid()
     plt.legend()
 
     plt.savefig("accuracy_epoch_plot.png")
@@ -105,6 +107,8 @@ def plot_time(accuracies, names):
     plt.savefig("accuracy_time_plot.png")
 
 
+mycsv = open("accuracies.csv", "w")
+writer = csv.writer(mycsv)
 #TODO: create a load-data-from-file option
 validation_data = generate_test_data()
 print("Generated validation data!")
@@ -123,10 +127,13 @@ deq_accuracy = loadandtrain(deqmodel, "deqmodel_exp.pth", training_data, validat
 
 
 accuracies = [base_accuracy, multilayer_accuracy, deq_accuracy]
+for accuracy in accuracies:
+    writer.writerow(accuracy[0])
 names = ["GRU (1 layer)", "GRU (3 layer)", "DEQ"]
 plot_epochs(accuracies, names)
 plot_time(accuracies, names)
 
+mycsv.close()
 
 
 

@@ -58,8 +58,7 @@ def list_of_tuples(sequence, embedding):
     return list_of_tuples
 
 
-def get_x_y_list(NUM_EXAMPLES):
-  LENGTH_EXPRESSION = 31
+def get_x_y_list(NUM_EXAMPLES, LENGTH_EXPRESSION=31):
   operators = np.array(['+', '-', '*', '/'])
   numbers = np.array(range(1,10)).astype('str_')
   id = torch.eye(15)
@@ -96,6 +95,10 @@ def generate_training_data():
 
 def generate_test_data():
     return get_x_y_list(5000)
+
+
+def generate_longer_data():
+    return get_x_y_list(5000, 61)
 
 
 def decoder(seq):
