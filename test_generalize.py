@@ -1,4 +1,4 @@
-from generate_data import generate_longer_data
+from generate_data import generate_longer_data, generate_biased_data
 import torch
 from torch import nn
 import basemodel
@@ -6,7 +6,7 @@ import deqmodel
 from torch.utils.data import DataLoader
 import numpy as np
 
-test_data = generate_longer_data()
+test_data = generate_biased_data()
 print("Generated test data!")
 filenames = ["basemodel_exp.pth", "mlmodel_exp.pth", "deqmodel_exp.pth"]
 

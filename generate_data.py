@@ -58,34 +58,25 @@ def list_of_tuples(sequence, embedding):
     return list_of_tuples
 
 
-def get_x_y_list(NUM_EXAMPLES, LENGTH_EXPRESSION=31):
-  operators = np.array(['+', '-', '*', '/'])
+def get_x_y_list(num_examples, seq_len=31, biased=False):
+  if biased:
+      operators = np.array(['+', '-', '*', '/', '-', '-'])
+  else:
+      operators = np.array(['+', '-', '*', '/'])
   numbers = np.array(range(1,10)).astype('str_')
   id = torch.eye(15)
-  # embedding = {'1': id[2],
-  #            '2': id[3],
-  #            '3': id[4],
-  #            '4': id[5],
-  #            '5': id[6],
-  #            '6': id[7],
-  #            '7': id[8],
-  #            '8': id[9],
-  #            '9': id[10],
-  #            '+': id[11],
-  #            '-': id[12],
-  #            '*': id[13],
-  #            '/': id[14],
-  #            '(': id[0],
-  #            ')': id[1], }
   embedding = [')', '(', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '/']
   sequence = []
-  for _ in range(NUM_EXAMPLES):
-    ex = generate(LENGTH_EXPRESSION, operators, numbers)
+  for _ in range(num_examples):
+    ex = generate(seq_len, operators, numbers)
     try:
       numexpr.evaluate(ex)
     except:
       continue
     sequence.append(ex)
+  if biased:
+      for i in range(50):
+          print(sequence[i])
   return list_of_tuples(sequence, embedding)
 
 
@@ -99,6 +90,12 @@ def generate_test_data():
 
 def generate_longer_data():
     return get_x_y_list(5000, 61)
+
+
+def generate_biased_data():
+    return get_x_y_list(5000, biased=True)
+
+
 
 
 def decoder(seq):
