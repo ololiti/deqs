@@ -8,7 +8,6 @@ Original file is located at
 """
 
 import numpy as np
-import random
 import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
@@ -23,7 +22,7 @@ def generate(length, operators, numbers):
   if length == 3:
       return np.random.choice(numbers) + np.random.choice(operators) + np.random.choice(numbers)
 
-  if (random.uniform(0,1) >= 0.6):
+  if (np.random.uniform(0,1) >= 0.6):
       return '(' + generate(length - 2, operators, numbers) + ')'
   else :
       op = np.random.choice(operators)
@@ -112,6 +111,7 @@ def decoder(seq):
 
 
 if __name__ == "__main__":
+    np.seed(0)
     data = get_x_y_list(500)
     mydataloader = DataLoader(data, batch_size=20)
     for X, y in mydataloader:
