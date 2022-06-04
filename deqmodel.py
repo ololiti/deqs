@@ -58,7 +58,8 @@ def anderson(f, x0, m=6, lam=1e-4, threshold=50, eps=1e-3, stop_mode='rel', beta
         G = F[:, :n] - X[:, :n]
         H[:, 1:n + 1, 1:n + 1] = torch.bmm(G, G.transpose(1, 2)) + lam * torch.eye(n, dtype=x0.dtype, device=x0.device)[
             None]
-        alpha = torch.solve(y[:, :n + 1], H[:, :n + 1, :n + 1])[0][:, 1:n + 1, 0]  # (bsz x n)
+        alpha = torch.linalg.solve(H[:, :n + 1, :n + 1], y[:, :n + 1])[:, 1:n + 1, 0]
+        # alpha = torch.solve(y[:, :n + 1], H[:, :n + 1, :n + 1])[0][:, 1:n + 1, 0]  # (bsz x n)
 
         X[:, k % m] = beta * (alpha[:, None] @ F[:, :n])[:, 0] + (1 - beta) * (alpha[:, None] @ X[:, :n])[:, 0]
         F[:, k % m] = f(X[:, k % m].reshape_as(x0)).reshape(bsz, -1)
@@ -96,14 +97,26 @@ def anderson(f, x0, m=6, lam=1e-4, threshold=50, eps=1e-3, stop_mode='rel', beta
 
 
 class Func(nn.Module):
-    def __init__(self):
+    def __init__(self, multilayer=False):
         super(Func, self).__init__()
         self.flatten = nn.Flatten()
-        self.z_layers = nn.Sequential(
-            nn.Tanh(),
-            nn.Linear(200, 200),
-            nn.Tanh()
-        )
+        if not multilayer:
+            self.z_layers = nn.Sequential(
+                nn.Linear(200, 200),
+                nn.Tanh()
+            )
+        else:
+            self.z_layers = nn.Sequential(
+                nn.Linear(200, 200),
+                nn.Tanh(),
+                nn.Linear(200, 200),
+                nn.Tanh(),
+                nn.Linear(200, 200),
+                nn.Tanh(),
+                nn.Linear(200, 200),
+                nn.Tanh(),
+                nn.Linear(200, 200)
+            )
         self.x_layers = nn.Tanh()
 
     def forward(self, x, z):
@@ -112,11 +125,11 @@ class Func(nn.Module):
 
 
 class NeuralNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self, multilayer=False):
         super(NeuralNetwork, self).__init__()
         self.flatten = nn.Flatten()
 
-        func = Func()
+        func = Func(multilayer)
 
         mydeq = DEQFixedPoint(func, solver=anderson)
 

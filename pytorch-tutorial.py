@@ -11,7 +11,7 @@ import time
 
 num_epochs = 100
 
-def loadandtrain(modeltype, pathname):
+def loadandtrain(modeltype, pathname, multilayer):
     # Download training data from open datasets.
     training_data = datasets.FashionMNIST(
         root="data",
@@ -41,11 +41,11 @@ def loadandtrain(modeltype, pathname):
 
     print(f"Using {modeltype.device} device")
 
-    model = modeltype.NeuralNetwork().to(modeltype.device)
+    model = modeltype.NeuralNetwork(multilayer).to(modeltype.device)
     print(model)
 
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-2)
 
     times = [0]
     accuracy = [modeltype.test(test_dataloader, model, loss_fn)]
@@ -57,7 +57,7 @@ def loadandtrain(modeltype, pathname):
         end_time = time.time()
         times.append(end_time - start_time)
         accuracy.append(curr_acc)
-        if times[len(times)-1] >= 600:
+        if curr_acc >= 90:
             break
     print("Done!")
 
@@ -67,7 +67,7 @@ def loadandtrain(modeltype, pathname):
     return times, accuracy
 
 
-def plot(base_accuracy, deq_accuracy):
+def plot(base_accuracy, deq_accuracy, name):
     plt.figure()
     epochslist = [i for i in range(num_epochs+1)]
     times, accuracy = base_accuracy
@@ -77,16 +77,46 @@ def plot(base_accuracy, deq_accuracy):
 
     plt.xlabel('time (s)')
     plt.ylabel('accuracy')
-    plt.xlim(0, 650)
+    plt.xlim(0, times[len(times)-1])
     plt.ylim(0, 100)
     plt.legend()
 
-    plt.savefig("accuracy_plot.png")
+    plt.savefig(name)
 
 
-base_accuracy = loadandtrain(basemodel, "basemodel.pth")
-deq_accuracy = loadandtrain(deqmodel, "deqmodel.pth")
+deq_accuracy_l = loadandtrain(deqmodel, "deqmodel.pth", True)
+base_accuracy_l = loadandtrain(basemodel, "basemodel.pth", True)
 # ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth")
 
 
-plot(base_accuracy, deq_accuracy)
+plot(base_accuracy_l, deq_accuracy_l, "accuracy_plot_large.png")
+
+deq_accuracy = loadandtrain(deqmodel, "deqmodel.pth", False)
+base_accuracy = loadandtrain(basemodel, "basemodel.pth", False)
+# ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth")
+
+
+plot(base_accuracy, deq_accuracy, "accuracy_plot_small.png")
+
+def plot_two(one, two, three, four, name):
+    plt.figure()
+    epochslist = [i for i in range(num_epochs+1)]
+    times, accuracy = one
+    plt.plot(times, accuracy, 'xkcd:blurple', label='baseline small')
+    times, accuracy = two
+    plt.plot(times, accuracy, 'xkcd:blurple', label='baseline large')
+    times, accuracy = three
+    plt.plot(times, accuracy, 'xkcd:lavender', label='deq small')
+    times, accuracy = four
+    plt.plot(times, accuracy, 'xkcd:lavender', label='deq large')
+
+    plt.xlabel('time (s)')
+    plt.ylabel('accuracy')
+    plt.xlim(0, times[len(times)-1])
+    plt.ylim(0, 100)
+    plt.legend()
+
+    plt.savefig(name)
+
+
+plot_two(base_accuracy, base_accuracy_l, deq_accuracy, deq_accuracy_l, "accuracy_plot_combined.png")

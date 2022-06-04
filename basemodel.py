@@ -6,16 +6,33 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Define model
 class NeuralNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self, multilayer=False):
         super(NeuralNetwork, self).__init__()
         self.flatten = nn.Flatten()
-        self.linear_relu_stack = nn.Sequential(
-            nn.Linear(28*28, 200),
-            nn.Tanh(),
-            nn.Linear(200, 200),
-            nn.Tanh(),
-            nn.Linear(200, 10)
-        )
+        if not multilayer:
+            self.linear_relu_stack = nn.Sequential(
+                nn.Linear(28*28, 200),
+                nn.Tanh(),
+                nn.Linear(200, 200),
+                nn.Tanh(),
+                nn.Linear(200, 10)
+            )
+        else:
+            self.linear_relu_stack = nn.Sequential(
+                nn.Linear(28 * 28, 200),
+                nn.Tanh(),
+                nn.Linear(200, 200),
+                nn.Tanh(),
+                nn.Linear(200, 200),
+                nn.Tanh(),
+                nn.Linear(200, 200),
+                nn.Tanh(),
+                nn.Linear(200, 200),
+                nn.Tanh(),
+                nn.Linear(200, 200),
+                nn.Tanh(),
+                nn.Linear(200, 10)
+            )
 
     def forward(self, x):
         x = self.flatten(x)
