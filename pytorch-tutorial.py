@@ -95,7 +95,7 @@ def plot_time(accuracies, names):
     COLORS = ['xkcd:blurple', 'xkcd:lavender', 'xkcd:lightblue', 'xkcd:indigo', 'xkcd:babypink']
     plt.figure()
     for i in range(len(accuracies)):
-        plt.plot(accuracies[i][0], accuracies[i][1], COLORS[i], label=names[i])
+        plt.plot(accuracies[i][1], accuracies[i][0], COLORS[i], label=names[i])
 
     plt.xlabel('time (s)')
     plt.ylabel('accuracy')

@@ -17,7 +17,7 @@ class DEQFixedPoint(nn.Module):
         # compute forward pass and re-engage autograd tape
         with torch.no_grad():
             z_shape = (x.size(dim=0), x.size(dim=1), self.hidden_size)
-            z = self.solver(lambda z: self.f(z, x), x0=x, **self.kwargs)['result']
+            z = self.solver(lambda z: self.f(z, x), x0=x, stop_mode='abs', **self.kwargs)['result']
         z = self.f(z, x)
 
         if self.training:
@@ -29,7 +29,7 @@ class DEQFixedPoint(nn.Module):
 
             def backward_hook(grad):
                 g = self.solver(lambda y: autograd.grad(f0, z0, y, retain_graph=True)[0] + grad,
-                                                   grad, **self.kwargs)['result']
+                                                   grad, stop_mode='abs', **self.kwargs)['result']
                 g = g.to(device)
                 return g
 
@@ -63,8 +63,8 @@ def anderson(f, x0, m=6, lam=1e-4, threshold=50, eps=1e-3, stop_mode='rel', beta
         G = F[:, :n] - X[:, :n]
         H[:, 1:n + 1, 1:n + 1] = torch.bmm(G, G.transpose(1, 2)) + lam * torch.eye(n, dtype=x0.dtype, device=x0.device)[
             None]
-        # alpha = torch.linalg.solve(H[:, :n + 1, :n + 1], y[:, :n + 1])[:, 1:n + 1, 0]
-        alpha = torch.solve(y[:, :n + 1], H[:, :n + 1, :n + 1])[0][:, 1:n + 1, 0]  # (bsz x n)
+        alpha = torch.linalg.solve(H[:, :n + 1, :n + 1], y[:, :n + 1])[:, 1:n + 1, 0]
+        # alpha = torch.solve(y[:, :n + 1], H[:, :n + 1, :n + 1])[0][:, 1:n + 1, 0]  # (bsz x n)
 
         X[:, k % m] = beta * (alpha[:, None] @ F[:, :n])[:, 0] + (1 - beta) * (alpha[:, None] @ X[:, :n])[:, 0]
         F[:, k % m] = f(X[:, k % m].reshape_as(x0)).reshape(bsz, -1)
@@ -88,6 +88,9 @@ def anderson(f, x0, m=6, lam=1e-4, threshold=50, eps=1e-3, stop_mode='rel', beta
                 trace_dict[stop_mode].append(lowest_dict[stop_mode])
                 trace_dict[alternative_mode].append(lowest_dict[alternative_mode])
             break
+
+        if k == threshold - 1:
+            print("readched threshold without converging :(")
 
     out = {"result": lowest_xest,
            "lowest": lowest_dict[stop_mode],
@@ -134,7 +137,7 @@ class NeuralNetwork(nn.Module):
         z0, hidden = self.rnnx(x)
         output = self.mydeq(z0)
         if checkfixed:
-            print(f"z - f(z) = {torch.linalg.norm(output - self.func(output, z0))}")
+            print(f"||z - f(z)|| = {torch.linalg.norm(output - self.func(output, z0))}")
         return self.fixoutput(output)
 
 
