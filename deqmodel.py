@@ -89,8 +89,8 @@ def anderson(f, x0, m=6, lam=1e-4, threshold=50, eps=1e-3, stop_mode='rel', beta
                 trace_dict[alternative_mode].append(lowest_dict[alternative_mode])
             break
 
-        if k == threshold - 1:
-            print("readched threshold without converging :(")
+        # if k == threshold - 1:
+        #     print("readched threshold without converging :(")
 
     out = {"result": lowest_xest,
            "lowest": lowest_dict[stop_mode],
