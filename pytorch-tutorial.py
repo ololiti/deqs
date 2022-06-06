@@ -5,6 +5,7 @@ from torchvision import datasets
 from torchvision.transforms import ToTensor
 import basemodel
 import neuralodemodel
+import naivemodel
 import repeatedmodel
 import matplotlib.pyplot as plt
 import numpy as np
@@ -120,18 +121,16 @@ training_data = generate_training_data()
 print("Generated training data!")
 print("Training baseline model...")
 
+naive_accuracy = loadandtrain(naivemodel, "naivemodel_exp2.pth", training_data, validation_data, test_data)
 base_accuracy = loadandtrain(basemodel, "basemodel_exp2.pth", training_data, validation_data, test_data)
-# multilayer_accuracy = loadandtrain(basemodel, "mlmodel_exp.pth", training_data, validation_data, test_data, multilayer=True)
 repeated_accuracy = loadandtrain(repeatedmodel, "repeatedmodel_exp2.pth", training_data, validation_data, test_data)
-# print("Training ODE model...")
-# ode_accuracy = loadandtrain(neuralodemodel, "odemodel.pth", training_data, test_data)
 deq_accuracy = loadandtrain(deqmodel, "deqmodel_exp2.pth", training_data, validation_data, test_data)
 
 
-accuracies = [base_accuracy, repeated_accuracy, deq_accuracy]
+accuracies = [base_accuracy, repeated_accuracy, deq_accuracy, naive_accuracy]
 for accuracy in accuracies:
     writer.writerow(accuracy[0])
-names = ["GRU (1 layer)", "GRU (repeated 50x)", "DEQ"]
+names = ["GRU (1 layer)", "GRU (repeated 50x)", "DEQ", "Fully-connected"]
 plot_epochs(accuracies, names)
 plot_time(accuracies, names)
 
