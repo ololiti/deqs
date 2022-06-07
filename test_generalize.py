@@ -2,13 +2,14 @@ from generate_data import generate_longer_data, generate_biased_data
 import torch
 from torch import nn
 import basemodel
+import repeatedmodel
 import deqmodel
 from torch.utils.data import DataLoader
 import numpy as np
 
 test_data = generate_biased_data()
 print("Generated test data!")
-filenames = ["basemodel_exp.pth", "mlmodel_exp.pth", "deqmodel_exp.pth"]
+filenames = ["basemodel_exp2.pth", "repeatedmodel_exp2.pth", "deqmodel_exp2.pth"]
 
 for name in filenames:
     print(f"Loading from {name}...")
@@ -16,8 +17,8 @@ for name in filenames:
     if "basemodel" in name:
         model = basemodel.NeuralNetwork()
         modeltype = basemodel
-    elif "mlmodel" in name:
-        model = basemodel.NeuralNetwork(num_layers=3)
+    elif "repeatedmodel" in name:
+        model = repeatedmodel.NeuralNetwork()
         modeltype = basemodel
     else:
         model = deqmodel.NeuralNetwork()
