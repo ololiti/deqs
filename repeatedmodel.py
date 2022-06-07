@@ -2,11 +2,13 @@ import torch
 from torch import nn
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+SIZE_OF_DATA = 13
+SEQ_LEN = 31
 # print(f"Using {device} device")
 
 # Define model
 class NeuralNetwork(nn.Module):
-    def __init__(self, data_size=14, seq_len=31, hidden_size=50, output_size=1, batch_size=64, num_layers=1):
+    def __init__(self, data_size=SIZE_OF_DATA, seq_len=SEQ_LEN, hidden_size=50, output_size=1, batch_size=64, num_layers=1):
         super(NeuralNetwork, self).__init__()
         self.batch_size = batch_size
         self.hidden_size = hidden_size

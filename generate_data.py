@@ -14,7 +14,7 @@ from torch.utils.data import TensorDataset, DataLoader
 import numexpr
 
 
-#length has to be odd#
+#length has to be odd
 def generate(length, operators, numbers):
   if length == 1:
       return np.random.choice(numbers)
@@ -59,12 +59,12 @@ def list_of_tuples(sequence, embedding):
 
 def get_x_y_list(num_examples, seq_len=31, biased=False):
   if biased:
-      operators = np.array(['+', '-', '*', '/', '-', '-'])
+      operators = np.array(['+', '-', '-', '-'])
   else:
-      operators = np.array(['+', '-', '*', '/'])
+      operators = np.array(['+', '-'])
   numbers = np.array(range(1,10)).astype('str_')
-  id = torch.eye(15)
-  embedding = [')', '(', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '/']
+  id = torch.eye(13)
+  embedding = [')', '(', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-']
   sequence = []
   for _ in range(num_examples):
     ex = generate(seq_len, operators, numbers)
@@ -99,7 +99,7 @@ def generate_biased_data():
 
 def decoder(seq):
     exp = ''
-    embedding = [')', '(', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '/']
+    embedding = [')', '(', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-']
     for sym in seq:
         if torch.sum(sym) == 0:
             exp += '*'
@@ -111,6 +111,7 @@ def decoder(seq):
 
 
 if __name__ == "__main__":
+    np.random.seed(0)
     data = get_x_y_list(500)
     mydataloader = DataLoader(data, batch_size=20)
     for X, y in mydataloader:

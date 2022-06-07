@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.autograd as autograd
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+SIZE_OF_DATA = 13
+SEQ_LEN = 31
 
 # DEQFixedPoint and anderson code taken from the DEQs repo
 class DEQFixedPoint(nn.Module):
@@ -118,7 +120,7 @@ class Func(nn.Module):
 
 
 class NeuralNetwork(nn.Module):
-    def __init__(self, data_size=14, seq_len=31, hidden_size=50, output_size=1, batch_size=64):
+    def __init__(self, data_size=SIZE_OF_DATA, seq_len=SEQ_LEN, hidden_size=50, output_size=1, batch_size=64):
         super(NeuralNetwork, self).__init__()
 
         self.func = Func(data_size, hidden_size)
