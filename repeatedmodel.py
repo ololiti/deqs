@@ -24,7 +24,7 @@ class NeuralNetwork(nn.Module):
         z = z0
         for _ in range(50):
             output, hidden = self.repeatedgru(z)
-            z = self.tanh(z + z0)
+            z = self.tanh(output + z0)
         output = self.fixoutput(z)
         return output, hidden
 

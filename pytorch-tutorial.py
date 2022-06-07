@@ -123,14 +123,15 @@ print("Training baseline model...")
 
 naive_accuracy = loadandtrain(naivemodel, "naivemodel_exp2.pth", training_data, validation_data, test_data)
 base_accuracy = loadandtrain(basemodel, "basemodel_exp2.pth", training_data, validation_data, test_data)
+multilayer_accuaracy = loadandtrain(basemodel, "mlmodel_exp2.pth", training_data, validation_data, test_data, multilayer=True)
 repeated_accuracy = loadandtrain(repeatedmodel, "repeatedmodel_exp2.pth", training_data, validation_data, test_data)
 deq_accuracy = loadandtrain(deqmodel, "deqmodel_exp2.pth", training_data, validation_data, test_data)
 
 
-accuracies = [base_accuracy, repeated_accuracy, deq_accuracy, naive_accuracy]
+accuracies = [naive_accuracy, base_accuracy, multilayer_accuaracy, repeated_accuracy, deq_accuracy]
 for accuracy in accuracies:
     writer.writerow(accuracy[0])
-names = ["GRU (1 layer)", "GRU (repeated 50x)", "DEQ", "Fully-connected"]
+names = ["basic NN", "GRU (1 layer)", "GRU (3 layer)",  "GRU (repeated layer)", "DEQ"]
 plot_epochs(accuracies, names)
 plot_time(accuracies, names)
 

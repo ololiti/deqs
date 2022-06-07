@@ -51,7 +51,7 @@ def test(dataloader, model, loss_fn):
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.to(device).float(), y.to(device).float()
-            pred, hidden = model(X)
+            pred = model(X)
             #print(f"first prediction: {pred[0]}, y val: {y[0]}")
             test_loss += loss_fn(pred, y).item()
             correct += (abs(torch.sigmoid(pred) - y) < 0.5).type(torch.float).sum().item()
