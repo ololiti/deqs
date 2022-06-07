@@ -80,7 +80,7 @@ def loadandtrain(modeltype, pathname, training_data, validation_data, test_data,
 
 
 def plot_epochs(accuracies, names):
-    COLORS = ['xkcd:blurple', 'xkcd:lavender', 'xkcd:lightblue', 'xkcd:indigo', 'xkcd:babypink']
+    COLORS = ['xkcd:blurple', 'xkcd:lavender', 'xkcd:lightblue', 'xkcd:indigo', 'xkcd:pink']
     plt.figure()
     epochslist = [i+1 for i in range(num_epochs)]
     for i in range(len(accuracies)):
@@ -95,7 +95,7 @@ def plot_epochs(accuracies, names):
     plt.savefig("accuracy_epoch_plot.png")
 
 def plot_time(accuracies, names):
-    COLORS = ['xkcd:blurple', 'xkcd:lavender', 'xkcd:lightblue', 'xkcd:indigo', 'xkcd:babypink']
+    COLORS = ['xkcd:blurple', 'xkcd:lavender', 'xkcd:lightblue', 'xkcd:indigo', 'xkcd:pink']
     plt.figure()
     for i in range(len(accuracies)):
         plt.plot(accuracies[i][1], accuracies[i][0], COLORS[i], label=names[i])
